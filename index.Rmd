@@ -1,0 +1,989 @@
+---
+title: "Untitled"
+author: "Emerson"
+date: "5/10/2020"
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+## Load packages
+
+```{r setup, include=FALSE}
+library(readxl)
+library(tidyverse)
+library(cowplot)
+library(ggthemes)
+library(ggpubr)
+library(patchwork)
+library(epiR)
+library(Metrics)
+theme_set(theme_minimal_grid(font_size = 8, font_family = "Arial"))
+```
+
+
+## Combine all data
+
+```{r}
+FPN <- read_csv("fpn.csv") %>%
+  mutate(model = "FPN")
+
+DeeplabV3M <- read_csv("mobilenetv2.csv") %>%
+  mutate(model = "DeeplabV3M")
+PSPNet <- read_csv("PSPNet.csv") %>%
+  mutate(model = "PSPNet")
+Segnet <- read_csv("Segnet.csv") %>%
+  mutate(model = "Segnet")
+Unet <- read_csv("Unet.csv") %>%
+  mutate(model = "Unet")
+DeeplabV3X <- read_csv("xception.csv") %>%
+  mutate(model = "DeeplabV3X")
+Assess <- read_csv("Assess.csv") %>%
+  mutate(model = "Assess")
+
+
+All <- rbind(
+  FPN, DeeplabV3M, PSPNet,
+  Segnet, Unet, DeeplabV3X, Assess
+) %>%
+  mutate(actual2 = as.numeric(actual)) %>%
+  mutate(predicted2 = as.numeric(predicted))
+```
+
+
+## Coffee leaf miner
+
+### FPN
+
+```{r}
+
+FPN_coffee <- All %>%
+  filter(image_set == "coffee_miner") %>%
+  filter(model == "FPN") %>%
+  dplyr::select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "darkred", shape = 16, size = 2, alpha = 0.7) +
+  xlim(0, 23) +
+  ylim(0, 23) +
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "FPN",
+    subtitle = "ρc = 0.98, Cb = 0.99, r = 0.98 
+μ = 0.052, υ = 1.038, RMSE = 0.75"
+  )
+
+FPN_coffee
+
+FPN_coffee_ccc <- All %>%
+  filter(image_set == "coffee_miner") %>%
+  filter(model == "FPN") %>%
+  dplyr::select(actual2, predicted2)
+
+epi.ccc(FPN_coffee_ccc$actual2, FPN_coffee_ccc$predicted2)
+```
+
+
+
+### UNET
+
+```{r}
+
+Unet_coffee <- All %>%
+  filter(image_set == "coffee_miner") %>%
+  filter(model == "Unet") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+
+  geom_point(color = "darkred", shape = 16, size = 2, alpha = 0.7) +
+  xlim(0, 23) +
+  ylim(0, 23) +
+
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "Unet", 
+    subtitle = "ρc = 0.98, Cb = 0.99, r = 0.98
+μ = 0.023, υ = 1.010, RMSE = 0.665"
+  )
+
+Unet_coffee
+
+Unet_coffee_ccc <- All %>%
+  filter(image_set == "coffee_miner") %>%
+  filter(model == "Unet") %>%
+  select(actual2, predicted2)
+epi.ccc(Unet_coffee_ccc$actual2, Unet_coffee_ccc$predicted2)
+```
+
+
+### SEgNet
+
+```{r}
+
+Segnet_coffee <- All %>%
+  filter(image_set == "coffee_miner") %>%
+  filter(model == "Segnet") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "darkred", shape = 16, size = 2, alpha = 0.7) +
+  xlim(0, 23) +
+  ylim(0, 23) +
+
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "Segnet", 
+     subtitle = "ρc = 0.95, Cb = 0.99, r = 0.947
+μ = -0.003, υ = 0.994, RMSE = 1.15"
+  )
+
+Segnet_coffee_ccc <- All %>%
+  filter(image_set == "coffee_miner") %>%
+  filter(model == "Segnet") %>%
+  select(actual2, predicted2)
+epi.ccc(Segnet_coffee_ccc$actual2, Segnet_coffee_ccc$predicted2)
+```
+
+
+### PSPNet
+
+```{r}
+
+PSPNet_coffee <- All %>%
+  filter(image_set == "coffee_miner") %>%
+  filter(model == "PSPNet") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "darkred", shape = 16, size = 2, alpha = 0.7) +
+
+
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+  xlim(0, 23) +
+  ylim(0, 23) +
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "PSPNet",
+    subtitle = "ρc = 0.82, Cb = 0.91, r = 0.75
+μ = 0.35, υ = 1.27, RMSE = 2.11"
+  )
+
+
+
+PSPNet_coffee_ccc <- All %>%
+  filter(image_set == "coffee_miner") %>%
+  filter(model == "PSPNet") %>%
+  select(actual2, predicted2)
+epi.ccc(PSPNet_coffee_ccc$actual2, PSPNet_coffee_ccc$predicted2)
+```
+
+
+### DeepLabV3X
+
+```{r}
+
+Deeplabv3x_coffee <- All %>%
+  filter(image_set == "coffee_miner") %>%
+  filter(model == "DeeplabV3X") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "darkred", shape = 16, size = 2, alpha = 0.7) +
+  xlim(0, 23) +
+  ylim(0, 23) +
+
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "DeepLabv3+ (Xception)",
+    subtitle = "ρc = 0.97, Cb = 0.99, r = 0.96
+μ = 0.09, υ = 1.04, RMSE = 2.11"
+  )
+
+
+Deeplabv3x_coffee_ccc <- All %>%
+  filter(image_set == "coffee_miner") %>%
+  filter(model == "DeeplabV3X") %>%
+  select(actual2, predicted2)
+epi.ccc(Deeplabv3x_coffee_ccc$actual2, Deeplabv3x_coffee_ccc$predicted2)
+```
+
+
+### DeepLabV3M
+
+```{r}
+Deeplabv3M_coffee <- All %>%
+  filter(image_set == "coffee_miner") %>%
+  filter(model == "DeeplabV3M") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "darkred", shape = 16, size = 2, alpha = 0.7) +
+  xlim(0, 23) +
+  ylim(0, 23) +
+
+
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+
+
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "DeepLabv3+ (Mobilinet V2)", 
+    subtitle = "ρc = 0.94, Cb = 0.97, r = 0.91
+μ = 0.20, υ = 1.08, RMSE = 1.063"
+  )
+
+Deeplabv3M_coffee_ccc <- All %>%
+  filter(image_set == "coffee_miner") %>%
+  filter(model == "DeeplabV3M") %>%
+  select(actual2, predicted2)
+epi.ccc(Deeplabv3M_coffee_ccc$actual2, Deeplabv3M_coffee_ccc$predicted2)
+```
+
+### Graphs
+
+```{r}
+
+(Unet_coffee | Segnet_coffee | PSPNet_coffee) /
+  ( FPN_coffee |  Deeplabv3x_coffee | Deeplabv3M_coffee ) 
+ggsave("coffee.png", width = 8, height = 6)
+```
+
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+## Wheat tan spot
+
+### FPN
+
+```{r}
+
+FPN_wheat <- All %>%
+  filter(image_set == "wheat_tanspot") %>%
+  filter(model == "FPN") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "steelblue", shape = 16, size = 2, alpha = 0.7) +
+  xlim(0, 100) +
+  ylim(0, 100) +
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "FPN", 
+    subtitle = "ρc = 0.98, Cb = 0.99, r = 0.97
+μ = -0.019, υ = 1.02, RMSE = 4.99"
+  )
+
+FPN_wheat
+
+FPN_wheat_ccc <- All %>%
+  filter(image_set == "wheat_tanspot") %>%
+  filter(model == "FPN") %>%
+  select(actual2, predicted2)
+
+epi.ccc(FPN_wheat_ccc$actual2, FPN_wheat_ccc$predicted2)
+```
+
+
+
+### UNET
+
+```{r}
+
+Unet_wheat <- All %>%
+  filter(image_set == "wheat_tanspot") %>%
+  filter(model == "Unet") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+
+  geom_point(color = "steelblue", shape = 16, size = 2, alpha = 0.7) +
+  xlim(0, 100) +
+  ylim(0, 100) +
+
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "Unet", 
+    subtitle = "ρc = 0.982, Cb = 0.99, r = 0.98 
+μ = -0.03, υ = 1.013, RMSE = 5.02"
+  )
+Unet_wheat_ccc <- All %>%
+  filter(image_set == "wheat_tanspot") %>%
+  filter(model == "Unet") %>%
+  select(actual2, predicted2)
+epi.ccc(Unet_wheat_ccc$actual2, Unet_wheat_ccc$predicted2)
+```
+
+
+### SEgNet
+
+```{r}
+
+Segnet_wheat <- All %>%
+  filter(image_set == "wheat_tanspot") %>%
+  filter(model == "Segnet") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "steelblue", shape = 16, size = 2, alpha = 0.7) +
+  xlim(0, 100) +
+  ylim(0, 100) +
+
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "Segnet", 
+    subtitle = "ρc = 0.98, Cb = 0.99, r = 0.96
+μ = -0.009, υ = 1.04, RMSE = 5.27"
+  )
+
+Segnet_wheat_ccc <- All %>%
+  filter(image_set == "wheat_tanspot") %>%
+  filter(model == "Segnet") %>%
+  select(actual2, predicted2)
+epi.ccc(Segnet_wheat_ccc$actual2, Segnet_wheat_ccc$predicted2)
+```
+### PSPNet
+
+```{r}
+
+PSPNet_wheat <- All %>%
+  filter(image_set == "wheat_tanspot") %>%
+  filter(model == "PSPNet") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "steelblue", shape = 16, size = 2, alpha = 0.7) +
+
+  xlim(0, 100) +
+  ylim(0, 100) +
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "PSPNet", 
+    subtitle = "ρc = 0.98, Cb = 0.99, r = 0.97
+μ = -0.07, υ = 1.03, RMSE = 5.10"
+  )
+PSPNet_wheat_ccc <- All %>%
+  filter(image_set == "wheat_tanspot") %>%
+  filter(model == "PSPNet") %>%
+  select(actual2, predicted2)
+epi.ccc(PSPNet_wheat_ccc$actual2, PSPNet_wheat_ccc$predicted2)
+```
+
+
+### DeepLabV3X
+
+```{r}
+
+Deeplabv3x_wheat <- All %>%
+  filter(image_set == "wheat_tanspot") %>%
+  filter(model == "DeeplabV3X") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "steelblue", shape = 16, size = 2, alpha = 0.7) +
+  xlim(0, 100) +
+  ylim(0, 100) +
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "DeeplabV3+ (Xception)",
+      subtitle = "ρc = 0.983, Cb = 0.99, r = 0.97
+μ = -0.04, υ = 1.03, RMSE = 4.96"
+  )
+
+Deeplabv3x_wheat_ccc <- All %>%
+  filter(image_set == "wheat_tanspot") %>%
+  filter(model == "DeeplabV3X") %>%
+  select(actual2, predicted2)
+epi.ccc(Deeplabv3x_wheat_ccc$actual2, Deeplabv3x_wheat_ccc$predicted2)
+```
+
+
+### DeepLabV3M
+
+```{r}
+Deeplabv3M_wheat <- All %>%
+  filter(image_set == "wheat_tanspot") %>%
+  filter(model == "DeeplabV3M") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "steelblue", shape = 16, size = 2, alpha = 0.7) +
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+
+  xlim(0, 100) +
+  ylim(0, 100) +
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "DeeplabV3+ (Mobilinet V2)",
+    subtitle = "ρc = 0.95, Cb = 0.97, r = 0.93
+μ = -0.16, υ = 0.879, RMSE = 6.48"
+  )
+Deeplabv3M_wheat_ccc <- All %>%
+  filter(image_set == "wheat_tanspot") %>%
+  filter(model == "DeeplabV3M") %>%
+  select(actual2, predicted2)
+epi.ccc(Deeplabv3M_wheat_ccc$actual2, Deeplabv3M_wheat_ccc$predicted2)
+```
+
+### Graphs
+
+```{r}
+
+(Unet_wheat | Segnet_wheat | PSPNet_wheat) /
+  ( FPN_wheat  | Deeplabv3x_wheat | Deeplabv3M_wheat) 
+ggsave("wheat.png", width = 8, height = 6)
+```
+
+
+
+
+
+## Soybean rust
+
+### FPN
+
+```{r}
+
+FPN_soybean <- All %>%
+  filter(image_set == "soybean_rust") %>%
+  filter(model == "FPN") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "darkorange", shape = 16, size = 2, alpha = 0.7) +
+  xlim(0, 100) +
+  ylim(0, 100) +
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "FPN", 
+    subtitle = "ρc = 0.97, Cb = 0.99, r = 0.95
+μ = 0.001, υ = 1.10, RMSE = 6.53"
+  )
+
+FPN_soybean_ccc <- All %>%
+  filter(image_set == "soybean_rust") %>%
+  filter(model == "FPN") %>%
+  select(actual2, predicted2)
+
+epi.ccc(FPN_soybean_ccc$actual2, FPN_soybean_ccc$predicted2)
+```
+
+
+
+### UNET
+
+```{r}
+
+Unet_soybean <- All %>%
+  filter(image_set == "soybean_rust") %>%
+  filter(model == "Unet") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+
+  geom_point(color = "darkorange", shape = 16, size = 2, alpha = 0.7) +
+  xlim(0, 100) +
+  ylim(0, 100) +
+
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "Unet", 
+    subtitle = "ρc = 0.97, Cb = 0.99, r = 0.95
+μ = -0.02, υ = 1.09, RMSE = 6.42"
+  )
+Unet_soybean_ccc <- All %>%
+  filter(image_set == "soybean_rust") %>%
+  filter(model == "Unet") %>%
+  select(actual2, predicted2)
+epi.ccc(Unet_soybean_ccc$actual2, Unet_soybean_ccc$predicted2)
+```
+
+
+### SEgNet
+
+```{r}
+
+Segnet_soybean <- All %>%
+  filter(image_set == "soybean_rust") %>%
+  filter(model == "Segnet") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "darkorange", shape = 16, size = 2, alpha = 0.7) +
+  xlim(0, 100) +
+  ylim(0, 100) +
+
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "SegNet", 
+     subtitle = "ρc = 0.94, Cb = 0.96, r = 0.89
+μ = -0.08, υ = 1.26, RMSE = 9.60"
+  )
+
+Segnet_soybean_ccc <- All %>%
+  filter(image_set == "soybean_rust") %>%
+  filter(model == "Segnet") %>%
+  select(actual2, predicted2)
+epi.ccc(Segnet_soybean_ccc$actual2, Segnet_soybean_ccc$predicted2)
+```
+
+
+### PSPNet
+
+```{r}
+
+PSPNet_soybean <- All %>%
+  filter(image_set == "soybean_rust") %>%
+  filter(model == "PSPNet") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "darkorange", shape = 16, size = 2, alpha = 0.7) +
+
+  xlim(0, 100) +
+  ylim(0, 100) +
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "PSPNet", 
+    subtitle = "ρc = 0.93, Cb = 0.96, r = 0.89
+μ = 0.18, υ = 1.23, RMSE = 8.68"
+  )
+PSPNet_soybean_ccc <- All %>%
+  filter(image_set == "soybean_rust") %>%
+  filter(model == "PSPNet") %>%
+  select(actual2, predicted2)
+epi.ccc(PSPNet_soybean_ccc$actual2, PSPNet_soybean_ccc$predicted2)
+```
+
+
+### DeepLabV3X
+
+```{r}
+
+Deeplabv3x_soybean <- All %>%
+  filter(image_set == "soybean_rust") %>%
+  filter(model == "DeeplabV3X") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "darkorange", shape = 16, size = 2, alpha = 0.7) +
+  xlim(0, 100) +
+  ylim(0, 100) +
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "DeeplabV3+ (Xception)", 
+    subtitle = "ρc = 0.96, Cb = 0.98, r = 0.95
+μ = -0.02, υ = 1.15, RMSE = 6.83"
+  )
+
+Deeplabv3x_soybean_ccc <- All %>%
+  filter(image_set == "soybean_rust") %>%
+  filter(model == "DeeplabV3X") %>%
+  select(actual2, predicted2)
+epi.ccc(Deeplabv3x_soybean_ccc$actual2, Deeplabv3x_soybean_ccc$predicted2)
+```
+
+
+### DeepLabV3M
+
+```{r}
+Deeplabv3M_soybean <- All %>%
+  filter(image_set == "soybean_rust") %>%
+  filter(model == "DeeplabV3M") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "darkorange", shape = 16, size = 2, alpha = 0.7) +
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+
+  xlim(0, 100) +
+  ylim(0, 100) +
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+  labs(
+    x = "Reference Severity (%)",
+    y = "Predicted Severity (%)",
+    title = "DeeplabV3+ (Mobilinet V2)", 
+    subtitle = "ρc = 0.94, Cb = 0.97, r = 0.90
+μ = 0.144, υ = 1.22, RMSE = 8.72"
+  )
+Deeplabv3M_soybean_ccc <- All %>%
+  filter(image_set == "soybean_rust") %>%
+  filter(model == "DeeplabV3M") %>%
+  select(actual2, predicted2)
+epi.ccc(Deeplabv3M_soybean_ccc$actual2, Deeplabv3M_soybean_ccc$predicted2)
+```
+
+### Graphs
+
+```{r}
+
+(Unet_soybean | Segnet_soybean | PSPNet_soybean) /
+  ( FPN_soybean |  Deeplabv3x_soybean | Deeplabv3M_soybean) 
+ggsave("soybean.png", width = 8, height = 6)
+```
+
+
+#Assess
+
+
+```{r}
+Assess_coffee <- All %>%
+  filter(image_set == "coffee_miner") %>%
+  filter(model == "Assess") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "darkred", shape = 16, size = 2, alpha = 0.7) +
+  xlim(0, 23) +
+  ylim(0, 23) +
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+
+  labs(
+    x = "Reference Severity (%)",
+    y = "Assess 2.0 measure (%)",
+    title = "",
+    subtitle = "ρc = 0.94, Cb = 0.98, r = 0.96
+μ = 0.184, υ = 1.046, RMSE = 1.53"
+  )
+Assess_coffee
+
+Assess_coffee_ccc <- All %>%
+  filter(image_set == "coffee_miner") %>%
+  filter(model == "Assess") %>%
+  select(actual2, predicted2)
+epi.ccc(Assess_coffee_ccc$actual2, Assess_coffee_ccc$predicted2)
+```
+
+
+
+```{r}
+
+Assess_wheat <- All %>%
+  filter(image_set == "wheat_tanspot") %>%
+  filter(model == "Assess") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "steelblue", shape = 16, size = 2, alpha = 0.7) +
+  xlim(0, 100) +
+  ylim(0, 100) +
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+
+  labs(
+    x = "Reference Severity (%)",
+    y = "Assess 2.0 measure (%)",
+    title = "", 
+    subtitle = "ρc = 0.97, Cb = 0.99, r = 0.96
+μ = -0.116, υ = 0.977, RMSE = 5.83"
+  )
+Assess_wheat
+
+Assess_wheat_ccc <- All %>%
+  filter(image_set == "wheat_tanspot") %>%
+  filter(model == "Assess") %>%
+  select(actual2, predicted2)
+
+epi.ccc(Assess_wheat_ccc$actual2, Assess_wheat_ccc$predicted2)
+```
+
+
+
+```{r}
+
+Assess_soybean <- All %>%
+  filter(image_set == "soybean_rust") %>%
+  filter(model == "Assess") %>%
+  select(actual2, predicted2) %>%
+  ggplot(aes(actual2, predicted2)) +
+  geom_point(color = "darkorange", shape = 16, size = 2, alpha = 0.7) +
+  xlim(0, 100) +
+  ylim(0, 100) +
+  geom_abline(intercept = 0, slope = 1, size = 0.5) +
+  geom_smooth(
+    method = "lm",
+    fullrange = TRUE,
+    se = F,
+    color = "black",
+    linetype = 2,
+    size = 0.5
+  ) +
+
+  labs(
+    x = "Reference Severity (%)",
+    y = "Assess 2.0 measure (%)",
+    title = "", 
+    subtitle = "ρc = 0.95, Cb = 0.99, r = 0.94
+μ = 0.106, υ = 1.05, RMSE = 6.81"
+  )
+Assess_soybean_ccc <- All %>%
+  filter(image_set == "soybean_rust") %>%
+  filter(model == "Assess") %>%
+  select(actual2, predicted2)
+epi.ccc(Assess_soybean_ccc$actual2, Assess_soybean_ccc$predicted2)
+```
+
+#### Graphs
+
+```{r}
+assess <- Assess_coffee / Assess_soybean / Assess_wheat +
+  plot_annotation(tag_levels = "A")
+ggsave("Assess.png", width = 2.5, height =7)
+```
+
+### All CCC combined
+
+```{r}
+all_ccc <- tibble::tribble(
+               ~crop,       ~model, ~value, ~lower, ~upper,
+  "Coffe leaf miner",       "Unet",  0.983,  0.973,  0.989,
+  "Coffe leaf miner",        "FPN",  0.979,  0.968,  0.986,
+  "Coffe leaf miner",  "DeeplabV3+(X)",  0.969,  0.954,   0.98,
+  "Coffe leaf miner",     "SegNet",  0.948,   0.92,  0.966,
+  "Coffe leaf miner", "DeeplabV3+(M)",   0.94,  0.911,  0.959,
+  "Coffe leaf miner",     "PSPNet",   0.82,  0.748,  0.873,
+  "Coffe leaf miner",     "Assess",  0.938,  0.908,  0.959,
+      "Soybean rust",       "Unet",  0.967,  0.943,  0.981,
+      "Soybean rust",        "FPN",  0.967,  0.942,  0.981,
+      "Soybean rust",  "DeeplabV3+(X)",  0.965,  0.942,  0.979,
+      "Soybean rust",     "SegNet",  0.936,    0.9,  0.959,
+      "Soybean rust", "DeeplabV3+(M)",  0.938,    0.9,  0.962,
+      "Soybean rust",     "PSPNet",  0.933,  0.893,  0.958,
+      "Soybean rust",     "Assess",  0.957,  0.922,  0.976,
+    "Wheat tan spot",       "Unet",  0.982,  0.964,  0.991,
+    "Wheat tan spot",        "FPN",  0.983,  0.964,  0.991,
+    "Wheat tan spot",  "DeeplabV3+(X)",  0.983,  0.966,  0.991,
+    "Wheat tan spot",     "SegNet",  0.977,  0.955,  0.989,
+    "Wheat tan spot", "DeeplabV3+(M)",  0.955,  0.917,  0.976,
+    "Wheat tan spot",     "PSPNet",   0.98,   0.96,   0.99,
+    "Wheat tan spot",     "Assess",  0.969,  0.939,  0.985
+  )
+all_ccc
+```
+
+
+```{r}
+
+
+all_ccc$model <- factor(all_ccc$model, levels = c("Assess", "Unet", "SegNet", "PSPNet",   "FPN", "DeeplabV3+(X)",
+                                          "DeeplabV3+(M)"))
+
+allccc <- all_ccc %>% 
+  ggplot(aes(model, value, color = crop))+
+  geom_point()+
+  theme_minimal_grid(font_size = 9)+
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 30, hjust = 1))+
+  geom_errorbar(aes(ymin = lower, ymax = upper), width =0.2)+
+  facet_wrap (~crop, ncol = 1)+
+  scale_color_manual(values = c("darkred", "darkorange", "steelblue"))+
+  labs(x = "Method", y = "ρc - Lin's concordance coefficient")
+ggsave("plot_all.png", width =3, height =6)
+
+```
+
+```{r}
+(assess | allccc) +
+  plot_annotation(tag_levels = "A")
+ggsave("assess_ccc.png", width = 4.5, height =6)
+```
+
+
